@@ -1,6 +1,6 @@
 # Fraud Signal Detector — Augmented Producer
 
-Real-time fraud demo using **Kinesis Data Streams**. We pull a Kaggle dataset via **KaggleHub**, serialize transactions, and publish them into a sharded stream for downstream analytics (rules + ML).
+Real-time fraud demo using **Kinesis Data Streams**. I pull a Kaggle dataset via **KaggleHub**, serialize transactions, and publish them into a sharded stream for downstream analytics (rules + ML).
 
 ## Why this exists
 - Show **streaming-first** fraud detection (not batch).
