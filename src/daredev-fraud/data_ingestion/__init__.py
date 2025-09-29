@@ -20,3 +20,7 @@ df = kagglehub.load_dataset(
 
 
 print("Fraud Transaction Dataset Analysis:", df.info())
+
+print(df['Class'].value_counts(normalize=True) * 100)
+
+print(df['Class'].value_counts())
