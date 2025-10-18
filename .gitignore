@@ -1,6 +1,5 @@
 .vscode/
 .venv/
-.github/
 .gitmessage.txt
 __pycache__/
 .ipynb_checkpoints/
@@ -31,3 +30,4 @@ build/
 *.war
 *.ear
 requirements.txt
+path/

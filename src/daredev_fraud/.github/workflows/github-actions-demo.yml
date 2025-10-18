@@ -1,0 +1,95 @@
+
+# .github/workflows/deploy-cloudformation.yml
+
+name: Deploy CloudFormation Stack
+
+# Trigger on push events to any branch
+on:
+  push:
+    branches:
+      - 'main'
+
+# Environment variables used across jobs
+env:
+  AWS_REGION: us-east-1 # Change this to your desired AWS region
+  STACK_NAME: kinesis-ingestor-stack # Name for your CloudFormation stack
+
+jobs:
+  deploy:
+    name: Deploy CloudFormation Stack
+    runs-on: ubuntu-latest
+
+    # Permissions needed for AWS operations
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      # Step 1: Checkout repository to access CloudFormation template
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      # Step 2: Configure AWS credentials using OIDC
+      # This uses secure token-based authentication between GitHub and AWS
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }} # IAM role ARN with necessary permissions
+          aws-region: ${{ env.AWS_REGION }}
+
+      # Step 3: Validate CloudFormation Template
+      # Ensures template is syntactically correct before deployment
+      - name: Validate CloudFormation Template
+        run: |
+          aws cloudformation validate-template \
+            --template-body file://kinesis_ingestor.yml
+
+      # Step 4: Deploy CloudFormation Stack
+      # Uses changeset to preview changes before applying
+      - name: Deploy CloudFormation Stack
+        run: |
+          # Create a change set
+          aws cloudformation create-change-set \
+            --stack-name ${{ env.STACK_NAME }} \
+            --template-body file://kinesis_ingestor.yml \
+            --change-set-name "GithubActionChange-${{ github.sha }}" \
+            --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
+            --change-set-type UPDATE \
+            || aws cloudformation create-stack \
+               --stack-name ${{ env.STACK_NAME }} \
+               --template-body file://kinesis_ingestor.yml \
+               --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM
+
+          # Wait for change set creation
+          aws cloudformation wait change-set-create-complete \
+            --stack-name ${{ env.STACK_NAME }} \
+            --change-set-name "GithubActionChange-${{ github.sha }}" \
+            || if [ $? -eq 255 ]; then
+                 # If change set has no changes, delete it and exit successfully
+                 aws cloudformation delete-change-set \
+                   --stack-name ${{ env.STACK_NAME }} \
+                   --change-set-name "GithubActionChange-${{ github.sha }}"
+                 echo "No changes to deploy"
+                 exit 0
+               else
+                 exit 1
+               fi
+
+          # Execute change set
+          aws cloudformation execute-change-set \
+            --stack-name ${{ env.STACK_NAME }} \
+            --change-set-name "GithubActionChange-${{ github.sha }}"
+
+          # Wait for stack update to complete
+          aws cloudformation wait stack-update-complete \
+            --stack-name ${{ env.STACK_NAME }} \
+            || aws cloudformation wait stack-create-complete \
+               --stack-name ${{ env.STACK_NAME }}
+
+      # Step 5: Output Stack Status
+      - name: Get Stack Status
+        run: |
+          aws cloudformation describe-stacks \
+            --stack-name ${{ env.STACK_NAME }} \
+            --query 'Stacks[0].StackStatus' \
+            --output text

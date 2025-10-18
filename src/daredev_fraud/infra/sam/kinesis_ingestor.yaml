@@ -1,0 +1,157 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: DARIA - HTTP Ingestor + Consumer Pipeline
+
+Parameters:
+  Env: { Type: String, Default: dev }
+  StreamName: { Type: String, Default: fraud-transactions-stream-dev }
+
+Globals:
+  Function:
+    Runtime: python3.12
+    Timeout: 15
+    MemorySize: 256
+
+Resources:
+  # ----------------------------------------------------------
+  #  Kinesis Stream
+  # ----------------------------------------------------------
+  TxnStream:
+    Type: AWS::Kinesis::Stream
+    Properties:
+      Name: !Ref StreamName
+      ShardCount: 1
+
+  # ----------------------------------------------------------
+  #  IAM Role for Producer Lambda (HTTP → Kinesis)
+  # ----------------------------------------------------------
+  DariaKinesisProducerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub daria-kinesis-producer-${Env}-role
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: { Service: lambda.amazonaws.com }
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: DariaKinesisWritePolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: AllowWriteToKinesis
+                Effect: Allow
+                Action:
+                  - kinesis:PutRecord
+                  - kinesis:PutRecords
+                  - kinesis:DescribeStream
+                  - kinesis:ListShards
+                Resource: !GetAtt TxnStream.Arn
+
+  # ----------------------------------------------------------
+  #  API Gateway + Producer Lambda
+  # ----------------------------------------------------------
+  IngestApi:
+    Type: AWS::Serverless::HttpApi
+
+  IngestFn:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub daria-kinesis-producer-${Env}
+      CodeUri: ../../src/ingestor
+      Handler: app.lambda_handler
+      Role: !GetAtt DariaKinesisProducerRole.Arn
+      Environment:
+        Variables:
+          STREAM_NAME: !Ref StreamName
+      Events:
+        PostTxn:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref IngestApi
+            Path: /transactions
+            Method: POST
+
+  # ----------------------------------------------------------
+  #  IAM Role for Consumer Lambda (Kinesis → DDB/S3)
+  # ----------------------------------------------------------
+  DariaKinesisConsumerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub daria-kinesis-consumer-${Env}-role
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: { Service: lambda.amazonaws.com }
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: DariaConsumerPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: ReadFromKinesis
+                Effect: Allow
+                Action:
+                  - kinesis:DescribeStream
+                  - kinesis:ListShards
+                  - kinesis:GetShardIterator
+                  - kinesis:GetRecords
+                Resource: !GetAtt TxnStream.Arn
+              - Sid: WriteToDynamoDB
+                Effect: Allow
+                Action:
+                  - dynamodb:PutItem
+                  - dynamodb:UpdateItem
+                  - dynamodb:GetItem
+                  - dynamodb:DescribeTable
+                Resource:
+                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/daria_txn_meta_${Env}
+                  - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/daria_txn_meta_${Env}/index/gsi_customer_ts
+              - Sid: WriteToS3
+                Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:AbortMultipartUpload
+                Resource: !Sub arn:aws:s3:::daria-txn-landing-${Env}/*
+              - Sid: CloudWatchLogs
+                Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: "*"
+
+  # ----------------------------------------------------------
+  #  Consumer Lambda (stream processor)
+  # ----------------------------------------------------------
+  ConsumerFn:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub daria-kinesis-consumer-${Env}
+      CodeUri: ../../src/consumer
+      Handler: handler.main
+      Role: !GetAtt DariaKinesisConsumerRole.Arn
+      Environment:
+        Variables:
+          TABLE_NAME: !Sub daria_txn_meta_${Env}
+          BUCKET_NAME: !Sub daria-txn-landing-${Env}
+      Events:
+        KinesisEvent:
+          Type: Kinesis
+          Properties:
+            Stream: !GetAtt TxnStream.Arn
+            StartingPosition: LATEST
+            BatchSize: 100
+            Enabled: true
+
+Outputs:
+  ApiUrl:
+    Value: !Sub https://${IngestApi}.execute-api.${AWS::Region}.amazonaws.com/transactions
+  StreamNameOut:
+    Value: !Ref StreamName
