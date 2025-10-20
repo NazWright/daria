@@ -108,7 +108,51 @@ The goal isn’t just to detect fraud — it’s to teach machines the intuition
 
 ---
 
-## 🖋️ Author
+## 🧰 CI / Deployment
+
+This repository includes a GitHub Actions workflow that validates and deploys the
+SAM/CloudFormation template located at `src/daredev_fraud/infra/sam/kinesis_ingestor.yaml`.
+
+- Workflow path: `.github/workflows/github-actions-demo.yml`.
+- The workflow validates the CloudFormation template and applies a change set (using OIDC).
+- Set `AWS_ROLE_ARN` in repository secrets to allow the workflow to assume a deploy role in your account.
+
+For local development, a commit template is provided at the repository root as
+`.gitmessage.txt`. VS Code is configured (via `.vscode/settings.json`) to open
+the editor for commit messages so the template appears automatically when
+you run `git commit` without `-m`. Edit the template and remove comment lines
+before saving the final commit message.
+
+## � Local testing (LocalStack)
+
+If you want to run and test the Kinesis producer locally without touching AWS, use LocalStack.
+
+1. Start LocalStack (from repo root):
+
+```bash
+docker compose -f docker-compose.localstack.yml up -d
+```
+
+2. Create a Kinesis stream in LocalStack:
+
+```bash
+export AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test AWS_REGION=us-east-1
+aws --endpoint-url=http://localhost:4566 kinesis create-stream --stream-name fraud-stream --shard-count 1
+```
+
+3. Run the local producer (sends demo rows):
+
+```bash
+export KINESIS_ENDPOINT=http://localhost:4566
+python local_producer.py
+```
+
+Notes:
+- LocalStack listens on the edge port 4566 by default in this compose file.
+- The demo producer uses `KINESIS_ENDPOINT` environment variable to point at LocalStack.
+
+
+## �🖋️ Author
 
 **Nazere Wright (@daredevtech)**
 *Full-Stack + AWS Machine Learning Engineer*

@@ -1,0 +1,11 @@
+DDT: feat/day3-streaming Update README and consolidate CI workflow
+
+summary
+- Document CI / Deployment and commit-template usage in `README.md`.
+- Consolidate GitHub Actions workflow to repository-level `.github/workflows` and remove duplicate/old template at `src/daredev_fraud/.github/workflows`.
+- Tidy docs and small formatting fixes to README; no functional code changes.
+
+# Notes:
+# - This is a prepared commit message only. No files were committed or pushed.
+# - Paste this message into VS Code's Source Control commit box or run
+#   `git commit` and edit the editor message. Remove comment lines (#) before finalizing.
