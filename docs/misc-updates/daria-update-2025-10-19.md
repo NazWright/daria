@@ -19,7 +19,7 @@ Deliverables shipped today
 
 - Local testing environment: `docker-compose.localstack.yml` — runs a local emulation of AWS services used by the project.
 - Demo producer: `local_producer.py` — publishes sample transactions into the local stream so we can exercise downstream code.
-- Infrastructure template: `src/daredev_fraud/infra/sam/kinesis_ingestor.yaml` — a CloudFormation template that defines the cloud resources (stream, roles, and functions) when we want to deploy.
+- Infrastructure template: `src/daredev_fraud/infra/sam/kinesis_infra.yaml` — a CloudFormation template that defines the cloud resources (stream, roles, and functions) when we want to deploy.
 - Documentation: `docs/local-testing.md` and README updates with step-by-step commands so anyone can run the local environment or deploy to AWS.
 
 Why I prioritized this

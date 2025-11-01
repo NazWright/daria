@@ -61,7 +61,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: !Sub daria-kinesis-producer-${Env}
-      CodeUri: ../../src/ingestor
+      CodeUri: ../../src/daredev_fraud/api_gatway
       Handler: app.lambda_handler
       Role: !GetAtt DariaKinesisProducerRole.Arn
       Environment:
@@ -134,7 +134,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: !Sub daria-kinesis-consumer-${Env}
-      CodeUri: ../../src/consumer
+      CodeUri: ../../src/daredev_fraud/consumer
       Handler: handler.main
       Role: !GetAtt DariaKinesisConsumerRole.Arn
       Environment:

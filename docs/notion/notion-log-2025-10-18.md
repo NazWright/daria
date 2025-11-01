@@ -42,7 +42,7 @@ This is a concise, curious log — written to be copy-paste friendly for Notion 
 - `.vscode/settings.json` — new: `git.openEditorForCommitMessage = true` so the template appears in the editor when committing.
 - `.git-commit-draft.txt` — new: draft commit message for the current working tree (handy for pasting into VS Code).
 - `README.md` — updated: added CI / Deployment section documenting the workflow and the commit-template.
-- `src/daredev_fraud/infra/sam/kinesis_ingestor.yaml` — SAM template for the Kinesis stream and Lambda roles (added for infra-as-code).
+- `src/daredev_fraud/infra/sam/kinesis_infra.yaml` — SAM template for the Kinesis stream and Lambda roles (added for infra-as-code).
 - `src/daredev_fraud/.github/workflows/github-actions-demo.yml` — added: workflow that validates and deploys the SAM template using OIDC.
 - `.gitignore` — updated: added `path/` and extra ignore patterns to prevent local artifacts from being tracked.
 

@@ -60,8 +60,37 @@ python -m src.producer      # publishes Kaggle (or augmented) transactions
 # 6.  Optional: test a consumer
 python -m src.consumer_demo # quick reader
 ````
+ 
+## 🐍 Python virtualenv & Jupyter kernel (zsh / macOS)
 
----
+If you want a repeatable Python environment for the notebooks and to select a dedicated Jupyter kernel, run these commands from the repository root (zsh):
+
+```bash
+# Create and activate a venv in the repo (creates `./.venv`)
+python3 -m venv .venv
+source .venv/bin/activate
+
+# Upgrade packaging tools and install dependencies
+python -m pip install --upgrade pip setuptools wheel
+pip install -r requirements.txt
+
+# Install the package in editable mode for development
+pip install -e .
+
+# Ensure Jupyter + ipykernel are available and register a kernel
+pip install jupyter ipykernel
+python -m ipykernel install --user --name daria-venv --display-name "daria (.venv)"
+
+# Quick check (should print OK messages)
+python -c "import daredev_fraud; print('daredev_fraud import OK')"
+python -c "from daredev_fraud.data_ingestion import load_fraud_dataset; print('load_fraud_dataset imported:', callable(load_fraud_dataset))"
+```
+
+Once the kernel is installed, open Jupyter Notebook or Lab and choose the kernel named "daria (.venv)" from the Kernel menu.
+
+
+
+
 
 ## 🧬 Data Lineage
 
@@ -111,7 +140,7 @@ The goal isn’t just to detect fraud — it’s to teach machines the intuition
 ## 🧰 CI / Deployment
 
 This repository includes a GitHub Actions workflow that validates and deploys the
-SAM/CloudFormation template located at `src/daredev_fraud/infra/sam/kinesis_ingestor.yaml`.
+SAM/CloudFormation template located at `src/daredev_fraud/infra/sam/kinesis_infra.yaml`.
 
 - Workflow path: `.github/workflows/github-actions-demo.yml`.
 - The workflow validates the CloudFormation template and applies a change set (using OIDC).

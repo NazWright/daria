@@ -42,7 +42,7 @@ jobs:
       - name: Validate CloudFormation Template
         run: |
           aws cloudformation validate-template \
-            --template-body file://kinesis_ingestor.yml
+            --template-body file://kinesis_infra.yml
 
       # Step 4: Deploy CloudFormation Stack
       # Uses changeset to preview changes before applying
@@ -51,13 +51,13 @@ jobs:
           # Create a change set
           aws cloudformation create-change-set \
             --stack-name ${{ env.STACK_NAME }} \
-            --template-body file://kinesis_ingestor.yml \
+            --template-body file://kinesis_infra.yml \
             --change-set-name "GithubActionChange-${{ github.sha }}" \
             --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
             --change-set-type UPDATE \
             || aws cloudformation create-stack \
                --stack-name ${{ env.STACK_NAME }} \
-               --template-body file://kinesis_ingestor.yml \
+               --template-body file://kinesis_infra.yml \
                --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM
 
           # Wait for change set creation

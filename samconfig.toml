@@ -1,0 +1,14 @@
+version = 0.1
+
+[default.deploy]
+stack_name = "daria-stack-dev"
+s3_bucket = "daria-artifacts-dev"
+region = "us-east-1"
+capabilities = "CAPABILITY_NAMED_IAM"
+role_arn = "arn:aws:iam::378149414798:role/CloudFormationAssumeExecutionRole"
+confirm_changeset = true
+profile = "daria-deploy"
+
+[default.parameters]
+# Add template-specific parameters here if needed
+# Environment = "dev"

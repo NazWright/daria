@@ -1,0 +1,96 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CloudFormation execution role for DARIA (assumed by CloudFormation during stack operations)
+
+Parameters:
+  ArtifactBucket:
+    Type: String
+    Description: S3 bucket used for SAM artifacts (e.g. daria-artifacts-dev)
+  AccountId:
+    Type: String
+    Description: AWS account id (e.g. 378149414798)
+
+Resources:
+  CloudFormationExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub CloudFormationAssumeExecutionRole-${AccountId}
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: cloudformation.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: CloudFormationExecutionPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Sid: LambdaCRUD
+                Effect: Allow
+                Action:
+                  - lambda:CreateFunction
+                  - lambda:UpdateFunctionCode
+                  - lambda:UpdateFunctionConfiguration
+                  - lambda:DeleteFunction
+                  - lambda:GetFunction
+                  - lambda:InvokeFunction
+                  - lambda:CreateEventSourceMapping
+                  - lambda:UpdateEventSourceMapping
+                  - lambda:DeleteEventSourceMapping
+                Resource: !Sub "arn:aws:lambda:*:${AccountId}:function:daria-*"
+
+              - Sid: KinesisDynamoManage
+                Effect: Allow
+                Action:
+                  - kinesis:CreateStream
+                  - kinesis:DeleteStream
+                  - kinesis:DescribeStream
+                  - kinesis:ListShards
+                  - kinesis:PutRecord
+                  - kinesis:PutRecords
+                  - kinesis:UpdateShardCount
+                  - dynamodb:CreateTable
+                  - dynamodb:UpdateTable
+                  - dynamodb:DeleteTable
+                  - dynamodb:DescribeTable
+                  - dynamodb:PutItem
+                  - dynamodb:UpdateItem
+                Resource:
+                  - !Sub "arn:aws:kinesis:*:${AccountId}:stream/daria-*"
+                  - !Sub "arn:aws:dynamodb:*:${AccountId}:table/daria-*"
+
+              - Sid: S3ArtifactAccess
+                Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:GetBucketLocation
+                Resource:
+                  - !Sub "arn:aws:s3:::${ArtifactBucket}/*"
+                  - !Sub "arn:aws:s3:::${ArtifactBucket}"
+
+              - Sid: LogsWrite
+                Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                  - logs:PutRetentionPolicy
+                Resource: !Sub "arn:aws:logs:*:${AccountId}:log-group:*"
+
+              - Sid: MinimalIAMForCreatedResources
+                Effect: Allow
+                Action:
+                  - iam:CreateRole
+                  - iam:PutRolePolicy
+                  - iam:AttachRolePolicy
+                  - iam:DeleteRole
+                  - iam:PassRole
+                Resource: !Sub "arn:aws:iam::${AccountId}:role/daria-*"
+
+Outputs:
+  ExecutionRoleArn:
+    Value: !GetAtt CloudFormationExecutionRole.Arn
+    Export:
+      Name: daria-CloudFormationExecutionRoleArn

@@ -12,7 +12,7 @@ What I shipped ✅
 --------------
 - Local testing assets: `docker-compose.localstack.yml` (local emulation of AWS services used by the project).
 - Demo producer: `local_producer.py` — publishes sample transactions to a Kinesis stream (configurable endpoint).
-- Cloud infra template: `src/daredev_fraud/infra/sam/kinesis_ingestor.yaml` — SAM/CFN template for production deploy.
+- Cloud infra template: `src/daredev_fraud/infra/sam/kinesis_infra.yaml` — SAM/CFN template for production deploy.
 - Docs updates: `docs/local-testing.md` (step-by-step run commands), plus this consolidated log and small directory indexes to group docs.
 
 High-level motivation 💡
@@ -95,7 +95,7 @@ Quick checklist for validation ✅
 Notes / context for reviewers
 ----------------------------
 - The working demo script is `local_producer.py` at repo root and uses `boto3` with an optional endpoint override. See `docs/local-testing.md` for more details and full copy/paste run commands.
-- The infra template is in `src/daredev_fraud/infra/sam/kinesis_ingestor.yaml`. Use `sam deploy --guided` to push to AWS (you'll need an S3 bucket and appropriate IAM privileges).
+- The infra template is in `src/daredev_fraud/infra/sam/kinesis_infra.yaml`. Use `sam deploy --guided` to push to AWS (you'll need an S3 bucket and appropriate IAM privileges).
 
 Contact / owner
 ---------------

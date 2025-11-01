@@ -1,0 +1,71 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "CloudFormationDeploy",
+      "Effect": "Allow",
+      "Action": [
+        "cloudformation:CreateStack",
+        "cloudformation:UpdateStack",
+        "cloudformation:DeleteStack",
+        "cloudformation:DescribeStacks",
+        "cloudformation:DescribeStackEvents",
+        "cloudformation:GetTemplate",
+        "cloudformation:ValidateTemplate",
+        "cloudformation:CreateChangeSet",
+        "cloudformation:ExecuteChangeSet",
+        "cloudformation:DeleteChangeSet",
+        "cloudformation:ListStacks",
+        "cloudformation:DescribeStackResources"
+      ],
+      "Resource": [
+        "arn:aws:cloudformation:*:378149414798:stack/daria-*/*"
+      ]
+    },
+    {
+      "Sid": "ArtifactBucketAccess",
+      "Effect": "Allow",
+      "Action": [
+        "s3:PutObject",
+        "s3:GetObject",
+        "s3:ListBucket",
+        "s3:GetBucketLocation"
+      ],
+      "Resource": [
+        "arn:aws:s3:::daria-artifacts-dev",
+        "arn:aws:s3:::daria-artifacts-dev/*"
+      ]
+    },
+    {
+      "Sid": "PassCFNExecutionRoleToCloudFormation",
+      "Effect": "Allow",
+      "Action": "iam:PassRole",
+      "Resource": [
+        "arn:aws:iam::378149414798:role/CloudFormationAssumeExecutionRole",
+        "arn:aws:iam::378149414798:role/daria-kinesis-producer-dev-*",
+        "arn:aws:iam::378149414798:role/daria-kinesis-consumer-dev-*"
+      ],
+      "Condition": {
+        "StringEquals": {
+          "iam:PassedToService": "cloudformation.amazonaws.com"
+        }
+      }
+    },
+    {
+      "Sid": "ReadHelpers",
+      "Effect": "Allow",
+      "Action": [
+        "lambda:ListFunctions",
+        "lambda:GetFunction",
+        "kinesis:ListStreams",
+        "kinesis:DescribeStream",
+        "dynamodb:DescribeTable",
+        "s3:ListBucket",
+        "logs:DescribeLogGroups",
+        "logs:DescribeLogStreams",
+        "logs:GetLogEvents"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
